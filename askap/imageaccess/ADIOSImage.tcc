@@ -40,6 +40,10 @@
 #include <casacore/casa/iostream.h>
 #include <casacore/casa/sstream.h>
 
+
+ASKAP_LOGGER(ADIOSImageLogger, ".ADIOSImage");
+
+
 template <class T>
 ADIOSImage<T>::ADIOSImage()
 : casacore::ImageInterface<T>(casacore::RegionHandlerTable(getTable, this)),
@@ -58,6 +62,15 @@ ADIOSImage<T>::ADIOSImage (
 {
   config = configname;
   row_p = rowNumber;
+#ifdef ADIOS2_USE_MPI
+// A Hack to force the use of MPI_COMM_WORLD
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int size;
+  MPI_Comm_size(comm, &size);
+  if(size > 1){
+    adios_comm = comm;
+  }
+#endif
   makeNewTable(shape, rowNumber, filename);
   attach_logtable();
   AlwaysAssert(setCoordinateInfo(coordinateInfo), casacore::AipsError);
@@ -68,6 +81,7 @@ ADIOSImage<T>::ADIOSImage (
 template <class T> 
 ADIOSImage<T>::ADIOSImage (
   askapparallel::AskapParallel &comms,
+  size_t comm_index,
   const casacore::TiledShape& shape, 
   const casacore::CoordinateSystem& coordinateInfo, 
   const casacore::String& filename, 
@@ -76,16 +90,23 @@ ADIOSImage<T>::ADIOSImage (
 : casacore::ImageInterface<T>(casacore::RegionHandlerTable(getTable, this)),
   regionPtr_p   (0) 
 {
-  // assumes that only one communicator and that this is MPI_COMM_WORLD
-  // could also hack to just use comm world
-  adios_comm = comms.interGroupCommIndex();
+
+  adios_comm = comms.getComm(comm_index);
+  int size;
+  int result = MPI_Comm_size(adios_comm, &size);
+  ASKAPDEBUGASSERT(result == MPI_SUCCESS);
+  int rank;
+  result = MPI_Comm_rank(adios_comm, &rank);
+  ASKAPDEBUGASSERT(result == MPI_SUCCESS);
+  ASKAPLOG_INFO_STR(ADIOSImageLogger, "ADIOS received MPI Comm with size " << size << " and rank " << rank);
   config = configname;
   row_p = rowNumber;
-  // adios_comm = comms;
   makeNewTable(shape, rowNumber, filename);
-  attach_logtable();
-  AlwaysAssert(setCoordinateInfo(coordinateInfo), casacore::AipsError);
-  setTableType();
+  if (rank == 0){
+    attach_logtable();
+    AlwaysAssert(setCoordinateInfo(coordinateInfo), casacore::AipsError);
+    setTableType();
+  }
 }
 #endif 
 
@@ -118,8 +139,8 @@ ADIOSImage<T>::ADIOSImage (
 : casacore::ImageInterface<T>(casacore::RegionHandlerTable(getTable, this)),
   regionPtr_p   (0)
 {
-  adios_comm = comms.interGroupCommIndex();;
-  tab_p = casacore::Table(adios_comm, filename,casacore::Table::TableOption::Old);
+  adios_comm = comms.interGroupCommIndex();
+  tab_p = casacore::Table(filename,casacore::Table::TableOption::Old);
   map_p = casacore::ArrayColumn<T>(tab_p, "map");
   row_p = rowNumber;
   config = configname;

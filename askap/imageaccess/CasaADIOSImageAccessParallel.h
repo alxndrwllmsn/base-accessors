@@ -50,13 +50,13 @@ namespace accessors {
 /// @ingroup imageaccess
 
 template <class T = casacore::Float>
-struct CasaADIOSImageAccessParallel : public CasaADIOS2ImageAccess<T> {
+struct CasaADIOSImageAccessParallel : public CasaADIOSImageAccess<T> {
 
 public:
     /// @brief constructor
     /// @param[in] comms, MPI communicator
     /// @param[in] config, string pointing to adios configuration
-    template <class T> CasaADIOSImageAccessParallel<T>(askapparallel::AskapParallel &comms, std::string configname = "");
+    CasaADIOSImageAccessParallel(askapparallel::AskapParallel &comms, std::string config = "", size_t comm_index = 0);
 
     // PJE -- uncertain how many functions would really require overwriting so as to 
     // do something with the comms. 
@@ -153,7 +153,7 @@ public:
     /// @param[in] shape full shape of the image
     /// @param[in] csys coordinate system of the full image
     virtual void create(const std::string &name, const casacore::IPosition &shape,
-                        const casacore::CoordinateSystem &csys) override;
+                        const casacore::CoordinateSystem &csys);
 
     /// @brief write full image
     /// @param[in] name image name
@@ -264,6 +264,7 @@ private:
     std::string itsName;
     mutable std::unique_ptr<ADIOSImage<T>> imagePtr_p;
     std::string configname;
+    size_t itsCommIndex;
       
 };
 

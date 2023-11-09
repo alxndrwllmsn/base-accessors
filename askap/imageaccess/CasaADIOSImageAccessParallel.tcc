@@ -41,7 +41,7 @@
 #include <askap/askapparallel/MPIComms.h>
 #include <askap/askapparallel/AskapParallel.h>
 
-ASKAP_LOGGER(casaADIOSImAccessLogger, ".casaADIOSImageAccessorParallel");
+ASKAP_LOGGER(casaADIOSImAccessParallelLogger, ".casaADIOSImageAccessorParallel");
 
 using namespace askap;
 using namespace askap::accessors;
@@ -50,15 +50,15 @@ using namespace askap::accessors;
 /// @param[in] comms, MPI communicator
 /// @param[in] config, configuration file name 
 template <class T>
-CasaADIOSImageAccessParallel::CasaADIOSImageAccessParallel<T>(askapparallel::AskapParallel &comms, std::string configname):
-    itsComms(comms), itsParallel(-1), CasaADIOSImageAccess(config)
+CasaADIOSImageAccessParallel<T>::CasaADIOSImageAccessParallel(askapparallel::AskapParallel &comms, std::string config, size_t comm_index):
+    itsComms(comms), itsParallel(-1), itsCommIndex(comm_index)
 {
-    config = configname;
+    configname = config;
     if (config != "") {
-        ASKAPLOG_INFO_STR(logger, "Creating parallel ADIOS accessor with configuration file " << config);
+        ASKAPLOG_INFO_STR(casaADIOSImAccessParallelLogger, "Creating parallel ADIOS accessor with configuration file " << config);
     }
     else {
-        ASKAPLOG_INFO_STR(logger, "Creating parallel ADIOS accessor with default configuration");
+        ASKAPLOG_INFO_STR(casaADIOSImAccessParallelLogger, "Creating parallel ADIOS accessor with default configuration");
     }
 }
 
@@ -68,7 +68,7 @@ CasaADIOSImageAccessParallel::CasaADIOSImageAccessParallel<T>(askapparallel::Ask
 /// @param[in] name image name
 /// @return full shape of the given image
 template <class T>
-casacore::IPosition CasaADIOSImageAccessParrallel<T>::shape(const std::string &name) const
+casacore::IPosition CasaADIOSImageAccessParallel<T>::shape(const std::string &name) const
 {
     ADIOSImage<T> img(itsComms, name);
     return img.shape();
@@ -78,7 +78,7 @@ casacore::IPosition CasaADIOSImageAccessParrallel<T>::shape(const std::string &n
 /// @param[in] name image name
 /// @return array with pixels
 template <class T>
-casacore::Array<T> CasaADIOSImageAccessParrallel<T>::read(const std::string &name) const
+casacore::Array<T> CasaADIOSImageAccessParallel<T>::read(const std::string &name) const
 {
     ASKAPLOG_INFO_STR(casaADIOSImAccessParallelLogger, "Reading parallel CASA ADIOS image " << name);
     imagePtr_p.reset();
@@ -100,7 +100,7 @@ casacore::Array<T> CasaADIOSImageAccessParrallel<T>::read(const std::string &nam
 /// @param[in] trc top right corner of the selection
 /// @return array with pixels for the selection only
 template <class T>
-casacore::Array<T> CasaADIOSImageAccessParrallel<T>::read(const std::string &name, const casacore::IPosition &blc,
+casacore::Array<T> CasaADIOSImageAccessParallel<T>::read(const std::string &name, const casacore::IPosition &blc,
         const casacore::IPosition &trc) const
 {
     ASKAPLOG_INFO_STR(casaADIOSImAccessParallelLogger, "Reading a slice of the parallel CASA ADIOS image " << name << " from " << blc << " to " << trc);
@@ -267,7 +267,7 @@ void CasaADIOSImageAccessParallel<T>::create(const std::string &name, const casa
                              const casacore::CoordinateSystem &csys)
 {
     ASKAPLOG_INFO_STR(casaADIOSImAccessParallelLogger, "Creating a new CASA ADIOS image " << name << " with the shape " << shape);
-    imagePtr_p.reset(new ADIOSImage<T>(itsComms, 
+    imagePtr_p.reset(new ADIOSImage<T>(itsComms, itsCommIndex, 
         casacore::TiledShape(shape), csys, name, configname));
 }
 

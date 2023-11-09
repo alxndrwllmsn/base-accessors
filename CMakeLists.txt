@@ -192,7 +192,7 @@ target_compile_definitions(accessors PUBLIC
 	HAVE_AIPSPP
 	HAVE_BOOST
 	HAVE_LOG4CXX
-  # ADIOS2_USE_MPI
+  ADIOS2_USE_MPI
 )
 # add some more tests and sub-directories
 

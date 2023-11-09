@@ -57,7 +57,8 @@ boost::shared_ptr<IImageAccess< casacore::Float > > imageAccessFactory(const LOF
 /// @return shared pointer to the image access object
 /// @note CASA images are used by default
 boost::shared_ptr<IImageAccess< casacore::Float > > imageAccessFactory(const LOFAR::ParameterSet &parset,
-                                                                       askapparallel::AskapParallel &comms);
+                                                                       askapparallel::AskapParallel &comms,
+                                                                       size_t comm_index = 0);
 
 } // namespace accessors
 } // namespace askap

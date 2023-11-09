@@ -39,6 +39,7 @@ public:
 #ifdef ADIOS2_USE_MPI
   ADIOSImage (
     askapparallel::AskapParallel &comms,
+    size_t comm_index,
     const casacore::TiledShape& mapShape,
     const casacore::CoordinateSystem& coordinateInfo,
     const casacore::String& nameOfNewFile,
