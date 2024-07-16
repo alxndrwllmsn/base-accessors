@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.12.0)
 
 include_guard()
 
-set(VERSION "1.16.2")
+set(VERSION "1.16.3")
 project(base-accessors VERSION ${VERSION} LANGUAGES C CXX)
 
 find_package(Git REQUIRED)
