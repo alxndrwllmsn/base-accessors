@@ -35,7 +35,6 @@
 
 // stl includes
 #include <algorithm>
-#include <functional>
 #include <utility>
 
 // own includes
@@ -45,6 +44,8 @@
 #include <askap/dataaccess/TableInfoAccessor.h>
 #include <askap/dataaccess/IBufferManager.h>
 #include <askap/dataaccess/DataAccessError.h>
+
+#include <askap/askap/LegacyBasePredicates.h>
 
 // casa includes
 #include <casacore/tables/Tables/ArrayColumn.h>
@@ -64,7 +65,7 @@ namespace accessors {
 /// It can be moved in its own file, if found useful in other parts of the code
 /// @ingroup dataaccess_hlp
 template<typename X>
-struct MapMemFun : public std::unary_function<X*, void> {
+struct MapMemFun : public askap::utility::unary_function<X*, void> {
   /// construct adapter for member function in
   /// @param[in] in member function
   explicit MapMemFun(void (X::*in)()) : func(in) {}
