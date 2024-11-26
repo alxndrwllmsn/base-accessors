@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 3.12.0)
 
 include_guard()
 
+set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -117,14 +118,6 @@ option (ENABLE_RPATH "Include rpath in executables and shared libraries" YES)
 option (ENABLE_OPENMP "Build with OPENMP Support" NO)
 
 # find packages
-#find_package(lofar-common REQUIRED)
-#find_package(lofar-blob REQUIRED)
-#find_package(askap-askap 1.2 REQUIRED)
-#find_package(askap-scimath 1.2 REQUIRED)
-#find_package(askap-parallel 1.1 REQUIRED)
-#find_package(askap-askap REQUIRED)
-#find_package(askap-scimath REQUIRED)
-#find_package(askap-parallel REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem system thread chrono)
 find_package(log4cxx REQUIRED)
 find_package(Casacore REQUIRED COMPONENTS  ms images mirlib coordinates fits lattices measures scimath scimath_f tables casa)
@@ -171,7 +164,7 @@ endif(ENABLE_SHARED)
 
 if (CXX11)
 	set(CMAKE_CXX_STANDARD 11)
-	set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
 add_library(accessors SHARED
