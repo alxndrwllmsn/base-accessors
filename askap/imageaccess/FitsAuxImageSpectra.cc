@@ -104,8 +104,8 @@ FitsAuxImageSpectra::create(const casacore::RecordInterface &tableInfo,
     std::memset(cPointerWrapper.itsTType[0],'\0',col1.length() + 1);
     std::memcpy(cPointerWrapper.itsTType[0],col1.data(),col1.length());
     cPointerWrapper.itsTForm[0] = new char[sizeof(char)*4];
-    std::memset(cPointerWrapper.itsTForm[0],'\0',4);
-    std::memcpy(cPointerWrapper.itsTForm[0],"50A",3);
+    std::memset(cPointerWrapper.itsTForm[0],'\0',5);
+    std::memcpy(cPointerWrapper.itsTForm[0],"128A",4);
     cPointerWrapper.itsUnits[0] = new char[2];
     std::memset(cPointerWrapper.itsUnits[0],'\0',2);
     std::memcpy(cPointerWrapper.itsUnits[0],"",1);
@@ -193,6 +193,8 @@ FitsAuxImageSpectra::add(const std::string& id, const SpectrumT& spectrum)
 
     long firstElem = 1;
     char* bptr[] = {const_cast<char *> (id.c_str())};
+    const static int COMPONENT_NAME_LEN = 128;
+    ASKAPCHECK(id.length() <= COMPONENT_NAME_LEN,"column name (ie component name) exceeded 128 characters");
     if (fits_write_col(itsFitsPtr,TSTRING,1,itsCurrentRow,firstElem,1,
                        bptr,&itsStatus) )
         PrintError(itsStatus);
