@@ -52,94 +52,13 @@
 #include <askap/dataaccess/TableConstDataIterator.h>
 #include <askap/dataaccess/DataAccessError.h>
 #include <askap/dataaccess/DirectionConverter.h>
+#include <askap/dataaccess/TableSelectionDiskCache.h>
 
-ASKAP_LOGGER(logger, "");
+ASKAP_LOGGER(logger, "dataaccess");
 
 using namespace casa;
 using namespace askap;
 using namespace askap::accessors;
-
-namespace askap {
-
-namespace accessors {
-
-/// @brief a helper class to flag the whole row on the basis of FLAG_ROW
-/// @details The method to read a cube (i.e. visibility or flag info) from
-/// the table has been templated to allow the same code to work for both
-/// casacore::Complex visibilities and casacore::Bool flags. There is, however, an
-/// important difference. For flagging information, there is an extra
-/// column, FLAG_ROW. If the appropriate element is True, all row should be
-/// flagged. This is a helper template, which does nothing in the Complex
-/// case, but performs required checks for casacore::Bool.
-/// @ingroup dataaccess_tab
-template<typename T>
-struct WholeRowFlagger
-{
-  /// @brief constructor
-  /// @details in the default version input parameter is not used
-  inline WholeRowFlagger(const casacore::Table &) {}
-
-  /// @brief determine whether element by element copy is needed
-  /// @details This method analyses other columns of the table specific
-  /// for a particular type and fills the cube with appropriate data.
-  /// If it can't do this, it returns true, which forces an element by element
-  /// processing. By default parameters are not used
-  inline bool copyRequired(casacore::uInt, casacore::Cube<T> &) { return true;}
-};
-
-
-/// @brief a helper class to flag the whole row on the basis of FLAG_ROW
-/// @details This is a specialization for casacore::Bool (i.e. flagging information)
-/// see the main template for details
-/// @ingroup dataaccess_tab
-template<>
-struct WholeRowFlagger<casacore::Bool>
-{
-  /// @brief constructor
-  /// @details in the default version input parameter is not used
-  /// @param[in] iteration current iteration (table returned by the iterator)
-  inline WholeRowFlagger(const casacore::Table &iteration);
-
-  /// @brief determine whether element by element copy is needed
-  /// @details This method analyses other columns of the table specific
-  /// for a particular type and fills the cube with appropriate data.
-  /// If it can't do this, it returns true, which forces an element by element
-  /// processing. By default parameters are not used
-  /// @param[in] row a row to work with
-  /// @param[in] cube cube to work with
-  inline bool copyRequired(casacore::uInt row, casacore::Cube<casacore::Bool> &cube);
-private:
-  /// @brief accessor to the FLAG_ROW column
-  ROScalarColumn<casacore::Bool> itsFlagRowCol;
-  /// @brief true if the dataset has FLAG_ROW column
-  bool itsHasFlagRow;
-};
-
-WholeRowFlagger<casacore::Bool>::WholeRowFlagger(const casacore::Table &iteration) :
-    itsHasFlagRow(iteration.tableDesc().isColumn("FLAG_ROW"))
-{
-  if (itsHasFlagRow) {
-      itsFlagRowCol.attach(iteration, "FLAG_ROW");
-  }
-}
-
-bool WholeRowFlagger<casacore::Bool>::copyRequired(casacore::uInt row,
-                 casacore::Cube<casacore::Bool> &cube)
-{
-  ASKAPDEBUGASSERT(!itsFlagRowCol.isNull());
-  if (itsHasFlagRow) {
-      if (itsFlagRowCol.asBool(row)) {
-          cube.xyPlane(row) = true;
-          return false;
-      }
-  }
-  return true;
-}
-
-
-} // namespace accessors
-
-} // namespace askap
 
 /// @param[in] msManager a manager of the measurement set to use
 /// @param[in] sel shared pointer to selector
@@ -162,8 +81,7 @@ TableConstDataIterator::TableConstDataIterator(
         itsSelector(sel->clone()),
 	    itsConverter(conv->clone()),
 #endif
-	    itsMaxChunkSize(maxChunkSize),
-        itsAtStart(false)
+	    itsMaxChunkSize(maxChunkSize)
 {
   ASKAPDEBUGASSERT(conv);
   ASKAPDEBUGASSERT(sel);
@@ -172,38 +90,41 @@ TableConstDataIterator::TableConstDataIterator(
     itsSelector  = sel->clone();
   #endif
   init();
+
 }
 
 /// Restart the iteration from the beginning
 void TableConstDataIterator::init()
 {
-    ASKAPTRACE("TableConstDataIterator::init");
-  // avoid doing this if not required as it can be expensive
-  if (!itsAtStart) {
-      itsCurrentTopRow=0;
-      itsCurrentDataDescID=-100; // this value can't be in the table,
-                                 // therefore it is a flag of a new data descriptor
-      itsCurrentFieldID = -100; // this value can't be in the table,
-                                // therefore it is a flag of a new field ID
-      // by default use FIELD_ID column if it exists, otherwise use time to select
-      // pointings
-      itsUseFieldID = table().actualTableDesc().isColumn("FIELD_ID");
+  ASKAPTRACE("TableConstDataIterator::init");
 
-      const casacore::TableExprNode &exprNode =
-                  itsSelector->getTableSelector(itsConverter);
-      if (exprNode.isNull()) {
-          itsTabIterator=casacore::TableIterator(table(),"TIME",
-    	     casacore::TableIterator::Ascending,casacore::TableIterator::NoSort);
-      } else {
-          itsTabIterator=casacore::TableIterator(table()(itsSelector->
-                                   getTableSelector(itsConverter)),"TIME",
-    	     casacore::TableIterator::Ascending,casacore::TableIterator::NoSort);
-      }
-      itsChannelsSelected = false;
-      itsFlagData = false;
-      setUpIteration();
-      itsAtStart = true;
+  itsCurrentTopRow=0;
+  itsCurrentDataDescID=-100; // this value can't be in the table,
+                              // therefore it is a flag of a new data descriptor
+  itsCurrentFieldID = -100; // this value can't be in the table,
+                            // therefore it is a flag of a new field ID
+  // by default use FIELD_ID column if it exists, otherwise use time to select
+  // pointings
+  itsUseFieldID = table().tableDesc().isColumn("FIELD_ID");
+
+  if (itsTabIterator.isNull()) {
+    const casacore::TableExprNode &exprNode =
+                itsSelector->getTableSelector(itsConverter);
+    if (exprNode.isNull()) {
+      itsTabIterator=casacore::TableIterator(table(),"TIME",
+      casacore::TableIterator::Ascending,casacore::TableIterator::NoSort);
+    } else {
+      const std::string & name = itsSelector->getSelectionCacheName();
+      const Table sel = name.empty() ? table()(exprNode) : TableSelectionDiskCache::table(name, exprNode);
+      itsTabIterator = casacore::TableIterator(sel, "TIME", casacore::TableIterator::Ascending,
+        casacore::TableIterator::NoSort);
+    }
+  } else {
+    itsTabIterator.reset();
   }
+  itsChannelsSelected = false;
+  itsFlagData = false;
+  setUpIteration();
 }
 
 /// operator* delivers a reference to data accessor (current chunk)
@@ -232,7 +153,6 @@ casacore::Bool TableConstDataIterator::hasMore() const throw()
 casacore::Bool TableConstDataIterator::next()
 {
   ASKAPTRACE("TableConstDataIterator::next");
-  itsAtStart = false;
   itsCurrentTopRow+=itsNumberOfRows;
   if (itsCurrentTopRow>=itsCurrentIteration.nrow()) {
       ASKAPDEBUGASSERT(!itsTabIterator.pastEnd());
@@ -436,46 +356,14 @@ template<typename T>
 void TableConstDataIterator::fillCube(casacore::Cube<T> &cube,
                const std::string &columnName) const
 {
-  const casacore::uInt nChan = nChannel();
-  const casacore::uInt startChan = startChannel();
-
   // Setup a slicer to extract the specified channel range only
-  const Slicer chanSlicer(Slice(),Slice(startChan,nChan));
-
-  cube.resize(itsNumberOfPols, nChan, itsNumberOfRows);
-  ROArrayColumn<T> tableCol(itsCurrentIteration,columnName);
-
-  // helper class, which does nothing for visibility cube, but checks
-  // FLAG_ROW for flagging
-  WholeRowFlagger<T> wrFlagger(itsCurrentIteration);
-
-  for (uInt row=0; row<itsNumberOfRows; ++row) {
-       const casacore::IPosition shape = tableCol.shape(row);
-       ASKAPASSERT(shape.size() && (shape.size()<3));
-       const casacore::uInt thisRowNumberOfPols=shape[0];
-       const casacore::uInt thisRowNumberOfChannels = shape.size() > 1 ? shape[1] : 1;
-       if (thisRowNumberOfPols!=itsNumberOfPols) {
-           ASKAPTHROW(DataAccessError,"Number of polarizations is not "
-	               "conformant for row "<<row<<" of the "<<columnName<<
-	               "column");
-       }
-       if (thisRowNumberOfChannels!=itsNumberOfChannels) {
-           ASKAPTHROW(DataAccessError,"Number of channels is not "
-	               "conformant for row "<<row<<" of the "<<columnName<<
-	               "column");
-       }
-       // for now just copy. In the future we will pass this array through
-       // the transformation which will do averaging, selection,
-       // polarization conversion
-
-       if (wrFlagger.copyRequired(row + itsCurrentTopRow, cube)) {
-           // Extract slice for this row
-           // Internally, buf and cube.xyPlane(row) point to the same memory
-           casacore::Matrix<T> buf = cube.xyPlane(row);
-           // Copy a slice into buf and hence xyPlane
-           tableCol.getSlice(row + itsCurrentTopRow, chanSlicer, buf, False);
-
-       }
+  const Slicer chanSlicer(Slice(), Slice(startChannel(), nChannel()));
+  ROArrayColumn<T> tableCol(itsCurrentIteration, columnName);
+  if (itsNumberOfRows == itsCurrentIteration.nrow()) {
+    tableCol.getColumn(chanSlicer, cube, True);
+  } else {
+    const Slicer rowSlicer(Slice(itsCurrentTopRow, itsNumberOfRows));
+    tableCol.getColumnRange(rowSlicer, chanSlicer, cube, True);
   }
 }
 
@@ -485,7 +373,7 @@ void TableConstDataIterator::fillCube(casacore::Cube<T> &cube,
 ///            cube to fill with the complex visibility data
 void TableConstDataIterator::fillVisibility(casacore::Cube<casacore::Complex> &vis) const
 {
-  fillCube(vis, getDataColumnName());
+  fillCube(vis,getDataColumnName());
 }
 
 /// @brief read flagging information
@@ -497,8 +385,19 @@ void TableConstDataIterator::fillVisibility(casacore::Cube<casacore::Complex> &v
 void TableConstDataIterator::fillFlag(casacore::Cube<casacore::Bool> &flag) const
 {
   fillCube(flag,"FLAG");
+
   if (itsFlagData) {
-      flag = true;
+    flag = true;
+  } else {
+    if (itsCurrentIteration.tableDesc().isColumn("FLAG_ROW")) {
+      ROScalarColumn<Bool> flagRowCol(itsCurrentIteration,"FLAG_ROW");
+      for (uInt row=0; row<itsNumberOfRows; ++row) {
+        // flag the row if row flag is set
+        if (flagRowCol(row + itsCurrentTopRow)) {
+          flag.xyPlane(row) = true;
+        }
+      }
+    }
   }
 }
 
@@ -516,9 +415,14 @@ void TableConstDataIterator::fillNoise(casacore::Cube<casacore::Complex> &noise)
   noise.resize(itsNumberOfPols, nChan, itsNumberOfRows);
   noise.set(casacore::Complex(1.,1.));
   // if the sigma spectrum exists, use those sigmas to fill the noise cube
-  if (table().actualTableDesc().isColumn("SIGMA_SPECTRUM")) {
+  static bool once=true;
+  if (table().tableDesc().isColumn("SIGMA_SPECTRUM")) {
       // noise is given per channel and polarisation
       // Setup a slicer to extract the specified channel range only
+      if (once) {
+        ASKAPLOG_INFO_STR(logger,"Using SIGMA_SPECTRUM column for noise");
+        once=false;
+      }
       const Slicer chanSlicer(Slice(),Slice(startChan,nChan));
       casa::Matrix<Float> buf(itsNumberOfPols,nChan);
       ROArrayColumn<Float> sigmaCol(itsCurrentIteration,"SIGMA_SPECTRUM");
@@ -531,7 +435,7 @@ void TableConstDataIterator::fillNoise(casacore::Cube<casacore::Complex> &noise)
 #endif
            sigmaCol.getSlice(row+itsCurrentTopRow,chanSlicer,buf,False);
 
-           // SIGMA_SPECTRUM is ordered (pol,chan), so need to transpose
+           // SIGMA_SPECTRUM is ordered (pol,chan)
            for (casa::uInt chan=0; chan<nChan; chan++) {
                 for (casa::uInt pol=0; pol<itsNumberOfPols; pol++) {
                      // same noise for both real and imaginary parts
@@ -541,48 +445,25 @@ void TableConstDataIterator::fillNoise(casacore::Cube<casacore::Complex> &noise)
            }
       } // loop over rows
   } // if-statement checking that SIGMA_SPECTRUM column is present
-  else if (table().actualTableDesc().isColumn("SIGMA")) {
+  else if (table().tableDesc().isColumn("SIGMA")) {
+      if (once) {
+        ASKAPLOG_INFO_STR(logger,"Using SIGMA column for noise");
+        once=false;
+      }
       ROArrayColumn<Float> sigmaCol(itsCurrentIteration,"SIGMA");
-      casacore::Vector<Float> buf(itsNumberOfPols);
+      ASKAPDEBUGASSERT((sigmaCol.shape(0).size()==1) && sigmaCol.shape(0)[0] == casacore::Int(itsNumberOfPols));
+      const Slicer rowSlicer(Slice(itsCurrentTopRow, itsNumberOfRows));
+      const casacore::Matrix<Float> buf = sigmaCol.getColumnRange(rowSlicer);
       for (uInt row = 0; row<itsNumberOfRows; ++row) {
-           const casacore::IPosition shape = sigmaCol.shape(row);
-           ASKAPDEBUGASSERT((shape.size()<=2) && (shape.size()!=0));
-           if (shape.size() == 1) {
-               // noise is given per polarisation, same for all spectral channels
-               // IS SIGMA EVER NOT GOING TO BE THIS SIZE? (SEE SIGMA_SPECTRUM)
-               ASKAPDEBUGASSERT(shape[0] == casacore::Int(itsNumberOfPols));
-               //casacore::Array<Float> buf(casacore::IPosition(1,itsNumberOfPols));
-               sigmaCol.get(row+itsCurrentTopRow,buf,False);
-               for (uInt chan = 0; chan< nChan; ++chan) {
-                    //ASKAPDEBUGASSERT(chan< slice.nrow());
-                    //casacore::Vector<casacore::Complex> polNoise = slice.row(chan);
-                    for (casacore::uInt pol=0; pol<itsNumberOfPols; ++pol) {
-                         //ASKAPDEBUGASSERT(pol<buf.nelements());
-                         // same polarisation for both real and imaginary parts
-                         const casacore::Float val = buf(pol);
-                         noise(pol,chan,row) = casacore::Complex(val,val);
-                    }
-               }
-           } else {
-               // noise is given per channel and polarisation
-               // IS THIS EVER THE CASE, OR IS SIGMA_SPECTRUM (above) ALWAYS USED?
-               // Should always use SIGMA_SPECTRUM for this case (MHW)
-               ASKAPASSERT((shape[0] == casacore::Int(itsNumberOfChannels)) &&
-                           (shape[1] == casacore::Int(itsNumberOfPols)));
-
-               casacore::Array<Float> buf(casacore::IPosition(2,itsNumberOfChannels,itsNumberOfPols));
-               sigmaCol.get(row+itsCurrentTopRow,buf,False);
-
-               // not clear whether we need a transpose of the matrix. This
-               // case is not present in any available measurement set
-               const IPosition blc(2,startChan,0);
-               const IPosition trc(2,startChan+nChan-1,itsNumberOfPols-1);
-               // nowNoise is pol x chan
-               casacore::Matrix<casacore::Complex> rowNoise = noise.xyPlane(row);
-               // inVals is chan x pol
-               const casacore::Matrix<casacore::Float> inVals = buf(blc,trc);
-               casacore::convertArray(rowNoise,casacore::transpose(inVals));
-           }
+          // noise is given per polarisation, same for all spectral channels
+          for (casacore::uInt pol=0; pol<itsNumberOfPols; ++pol) {
+              // same noise for both real and imaginary parts
+              const casacore::Float val = buf(pol,row);
+              // nChan is 1 for imaging, so indexing is faster than slicing
+              for (uInt chan = 0; chan< nChan; ++chan) {
+                  noise(pol,chan,row) = casacore::Complex(val,val);
+              }
+          }
       } // loop over rows
   } // if-statement checking that SIGMA column is present
 }

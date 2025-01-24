@@ -13,11 +13,6 @@
 
 #include <askap/askap/AskapError.h>
 
-// boost includes
-#ifdef _OPENMP
-#include <boost/thread/shared_mutex.hpp>
-#endif
-
 namespace askap {
 
 namespace accessors {
@@ -37,12 +32,8 @@ struct CachedAccessorField  {
   /// @brief copy constructor
   /// @param[in] other an object to copy from
   /// @note reference semantics for casa arrays, but we're not copying this class where T is a casa array type. 
-#ifdef _OPENMP
-  CachedAccessorField(const CachedAccessorField<T> &other);
-#else
   CachedAccessorField(const CachedAccessorField<T> &other) : itsChangedFlag(other.itsChangedFlag),
         itsFlushFlag(other.itsFlushFlag), itsValue(other.itsValue) {}
-#endif
         
   /// @brief assignment operator
   /// @param[in] other an object to copy from
@@ -140,11 +131,6 @@ private:
 
   /// @brief cached buffer
   mutable T itsValue;
-  
-#ifdef _OPENMP
-  /// @brief mutex for synchronisation
-  mutable boost::shared_mutex itsMutex;
-#endif
 };
 
 } // namespace accessors

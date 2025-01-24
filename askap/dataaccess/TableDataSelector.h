@@ -76,7 +76,7 @@ public:
   /// @param[in] start the beginning of the chosen time interval
   /// @param[in] stop  the end of the chosen time interval
   virtual void chooseTimeRange(const casacore::MVEpoch &start,
-            const casacore::MVEpoch &stop);
+            const casacore::MVEpoch &stop) override;
 
   /// Choose time range. This method accepts a time range with
   /// respect to the origin defined by the DataSource object.
@@ -85,13 +85,13 @@ public:
   /// MVEpoch and is specified via the DataSource object.
   /// @param[in] start the beginning of the chosen time interval
   /// @param[in] stop the end of the chosen time interval
-  virtual void chooseTimeRange(casacore::Double start,casacore::Double stop);
+  virtual void chooseTimeRange(casacore::Double start,casacore::Double stop) override;
 
   /// Choose cycles. This is an equivalent of choosing the time range,
   /// but the selection is done in integer cycle numbers
   /// @param[in] start the number of the first cycle to choose
   /// @param[in] stop the number of the last cycle to choose
-  virtual void chooseCycles(casacore::uInt start, casacore::uInt stop);
+  virtual void chooseCycles(casacore::uInt start, casacore::uInt stop) override;
 
   /// Choose a subset of spectral channels
   /// @param[in] nChan a number of spectral channels wanted in the output
@@ -99,7 +99,7 @@ public:
   /// @param[in] nAvg a number of adjacent spectral channels to average
   ///             default is no averaging
   virtual void chooseChannels(casacore::uInt nChan, casacore::uInt start,
-                               casacore::uInt nAvg = 1);
+                               casacore::uInt nAvg = 1) override;
 
    /// Choose a subset of frequencies. The reference frame is
    /// defined by the DataSource object by default, but can be specified
@@ -112,7 +112,7 @@ public:
    ///        the frequency resolution would average two adjacent channels
    virtual void chooseFrequencies(casacore::uInt nChan,
             const casacore::MFrequency &start,
-            const casacore::MVFrequency &freqInc);
+            const casacore::MVFrequency &freqInc) override;
 
   /// Choose a subset of radial velocities. The reference frame is
   /// defined by the DataSource object
@@ -125,12 +125,12 @@ public:
   ///        the velocity resolution would average two adjacent channels
   virtual void chooseVelocities(casacore::uInt nChan,
            const casacore::MVRadialVelocity &start,
-  	 const casacore::MVRadialVelocity &velInc);
+  	 const casacore::MVRadialVelocity &velInc) override;
 
   /// Choose polarization.
   /// @param[in] pols a string describing the wanted polarization
   /// in the output. Allowed values are: I, "IQUV","XXYY","RRLL"
-  virtual void choosePolarizations(const casacore::String &pols);
+  virtual void choosePolarizations(const casacore::String &pols) override;
 
   /// Choose Data Tiles (in time/row direction)
   /// @param[in] nTiles number of tiles to select
@@ -145,7 +145,7 @@ public:
   /// @param[in] conv  a shared pointer to the converter, which is used to sort
   ///              out epochs and other measures used in the selection
   virtual const casacore::TableExprNode& getTableSelector(const
-                  boost::shared_ptr<IDataConverterImpl const> &conv) const;
+                  boost::shared_ptr<IDataConverterImpl const> &conv) const override;
 
   /// @brief choose data column
   /// @details This method allows to choose any table column as the visibility
@@ -154,13 +154,13 @@ public:
   /// selector interface and is not present in IDataSelector (therefore,
   /// a dynamic_pointer_cast is likely required).
   /// @param[in] dataColumn column name, which contains visibility data
-  virtual void chooseDataColumn(const std::string &dataColumn);
+  virtual void chooseDataColumn(const std::string &dataColumn) override;
 
   /// @brief obtain the name of data column
   /// @details This method returns the current name of the data column,
   /// set either in the constructor or by the chooseDataColumn method
   /// @return the name of the data column
-  virtual const std::string& getDataColumnName() const throw();
+  virtual const std::string& getDataColumnName() const throw() override;
 
   /// @brief clone a selector
   /// @details The same selector can be used to create a number of iterators.
@@ -170,14 +170,14 @@ public:
   /// @note This functionality is not exposed to the end user, which
   /// normally interacts with the IDataSelector class only. This is because
   /// cloning is done at the low level (e.g. inside the iterator)
-  virtual boost::shared_ptr<ITableDataSelectorImpl const> clone() const;
+  virtual boost::shared_ptr<ITableDataSelectorImpl const> clone() const override;
 
   /// @brief check whether channel selection has been done
   /// @details By default all channels are selected. However, if chooseChannels
   /// has been called, less channels are returned. This method returns true if
   /// this is the case and false otherwise.
   /// @return true, if a subset of channels has been selected
-  virtual bool channelsSelected() const throw();
+  virtual bool channelsSelected() const throw() override;
 
   /// @brief obtain channel selection
   /// @details By default all channels are selected. However, if chooseChannels
@@ -188,20 +188,20 @@ public:
   /// which is probably a prefered way to do this check to retain the code clarity.
   /// @return a pair, the first element gives the number of channels selected and
   /// the second element gives the start channel (0-based)
-  virtual std::pair<int,int> getChannelSelection() const throw();
+  virtual std::pair<int,int> getChannelSelection() const throw() override;
 
   /// @brief check whether frequency selection has been done
   /// @details By default all channels are selected. However, if chooseFrequencies
   /// has been called, less channels are returned. This method returns true if
   /// this is the case and false otherwise.
   /// @return true, if a subset of frequencies has been selected
-  virtual bool frequenciesSelected() const throw();
+  virtual bool frequenciesSelected() const throw() override;
 
   /// @brief obtain frequency selection
   /// @details By default all channels are selected. However, if chooseFrequencies
   /// has been called, less channels are returned by the accessor. This method
   /// returns the number of channels, the start frequency and the increment (Hz)
-  virtual std::tuple<int,casacore::MFrequency,double> getFrequencySelection() const throw();
+  virtual std::tuple<int,casacore::MFrequency,double> getFrequencySelection() const throw() override;
 
   /// @brief work out the tiling of the column in the time/row direction
   /// @param[in] string column : name of column to inspect (usually DATA or FLAG)
@@ -211,7 +211,23 @@ public:
   uint getTiling(const std::string& column,
           casacore::IPosition& tileShape, casacore::IPosition& hypercubeShape) const;
 
+  /// @brief specify the name for caching the selection
+  /// @details The (row) selection can be cached for repeated use, specify the name
+  /// of the cache. If unspecified or empty, no caching will be done
+  /// @param[in] string name : name of the cache file
+  void setSelectionCacheName(const std::string& name);
 
+  /// @brief return the name for caching the selection
+  /// @details The (row) selection can be cached for repeated use, return the name
+  /// of the cache. If empty, no caching is active
+  /// @return string name : name of the cache file
+  const std::string& getSelectionCacheName() const override;
+
+  /// @brief return the table name
+  /// @details The table name may be useful in setting the selection cache name.
+  /// This function returns the base name of the table.
+  /// @return string: the basename of the table (without directories)
+  std::string getTableName() const;
 
 private:
   /// a measurement set to work with. Reference semantics
@@ -233,6 +249,8 @@ private:
   casacore::MFrequency itsFreqStart;
   /// frequency increment (channel width)
   double itsFreqInc;
+  /// selection cache name
+  std::string itsSelectionCacheName;
 };
 
 } // namespace accessors

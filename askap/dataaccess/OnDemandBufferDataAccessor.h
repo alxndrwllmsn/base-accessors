@@ -43,9 +43,6 @@
 
 // boost includes
 #include <boost/noncopyable.hpp>
-#ifdef _OPENMP
-#include <boost/thread/shared_mutex.hpp>
-#endif
 
 namespace askap {
 	
@@ -117,11 +114,6 @@ private:
   /// @details A zero shape means that this class is coupled to read-only accessor, rather than
   /// this buffer.
   mutable casacore::Cube<casacore::Complex> itsBuffer;
-
-  #ifdef _OPENMP
-  /// @brief synchronisation object
-  mutable boost::shared_mutex itsMutex;
-  #endif
 };
 
 } // namespace accessors
