@@ -2,7 +2,11 @@ cmake_minimum_required (VERSION 3.12.0)
 
 include_guard()
 
-set(VERSION "1.16.3")
+set(CMAKE_VERBOSE_MAKEFILE on)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(VERSION "1.17.0")
 project(base-accessors VERSION ${VERSION} LANGUAGES C CXX)
 
 find_package(Git REQUIRED)
@@ -108,20 +112,12 @@ configure_file(askap_accessors.cc.in ${CMAKE_CURRENT_BINARY_DIR}/askap_accessors
 set(REQUIRED_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}")
 
 
-option (CXX11 "Compile as C++11 if possible" YES)
+option (CXX11 "Compile as C++11 if possible" NO)
 option (ENABLE_SHARED "Build shared libraries" YES)
 option (ENABLE_RPATH "Include rpath in executables and shared libraries" YES)
 option (ENABLE_OPENMP "Build with OPENMP Support" NO)
 
 # find packages
-#find_package(lofar-common REQUIRED)
-#find_package(lofar-blob REQUIRED)
-#find_package(askap-askap 1.2 REQUIRED)
-#find_package(askap-scimath 1.2 REQUIRED)
-#find_package(askap-parallel 1.1 REQUIRED)
-#find_package(askap-askap REQUIRED)
-#find_package(askap-scimath REQUIRED)
-#find_package(askap-parallel REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem system thread chrono)
 find_package(log4cxx REQUIRED)
 find_package(Casacore REQUIRED COMPONENTS  ms images mirlib coordinates fits lattices measures scimath scimath_f tables casa)
@@ -166,9 +162,9 @@ option (BUILD_SHARED_LIBS "" YES)
     endif (ENABLE_RPATH)
 endif(ENABLE_SHARED)
 
-if (CASACORE3 OR CXX11)
+if (CXX11)
 	set(CMAKE_CXX_STANDARD 11)
-	set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
 add_library(accessors SHARED
