@@ -60,9 +60,6 @@ UVWMachineCache::UVWMachineCache(size_t cacheSize, double tolerance) : itsCache(
 /// @details This method writes in the log cache utilisation statistics
 UVWMachineCache::~UVWMachineCache()
 {
-#ifdef _OPENMP
-   boost::shared_lock<boost::shared_mutex> lock(itsMutex);
-#endif
    
    if (itsCache.size()) {
        size_t cntUsed = 0;
@@ -84,17 +81,10 @@ UVWMachineCache::~UVWMachineCache()
 const UVWMachineCache::machineType& UVWMachineCache::machine(const casacore::MDirection &phaseCentre,
                                                  const casacore::MDirection &tangent) const
 {  
-#ifdef _OPENMP
-   boost::upgrade_lock<boost::shared_mutex> lock(itsMutex);
-#endif
     
    const size_t index = getIndex(phaseCentre,tangent);
    boost::shared_ptr<machineType> &machinePtr = itsCache[index];
    if (!machinePtr) {
-#ifdef _OPENMP
-       boost::upgrade_to_unique_lock<boost::shared_mutex> uniqueLock(lock);
-       ASKAPDEBUGASSERT(!machinePtr);
-#endif
        // need to set up a new machine here
        machinePtr.reset(new machineType(tangent, phaseCentre, false, false));
        // swap the arguments in the uvw machine call. It gives the correct result on real data

@@ -51,6 +51,7 @@ TableHolder.cc
 TableInfoAccessor.cc
 TableMeasureFieldSelector.cc
 TableScalarFieldSelector.cc
+TableSelectionDiskCache.cc
 TableTimeStampSelector.cc
 TempUVWMachine.cc
 TimeChunkIteratorAdapter.cc
@@ -141,6 +142,7 @@ TableInfoAccessor.h
 TableManager.h
 TableMeasureFieldSelector.h
 TableScalarFieldSelector.h
+TableSelectionDiskCache.h
 TableTimeStampSelector.h
 TableTimeStampSelectorImpl.h
 TableTimeStampSelectorImpl.tcc

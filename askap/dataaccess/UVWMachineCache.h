@@ -39,10 +39,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
-#ifdef _OPENMP
-#include <boost/thread/shared_mutex.hpp>
-#endif
-
 // casa includes
 #include <casacore/measures/Measures/MDirection.h>
 #include <casacore/measures/Measures/UVWMachine.h>
@@ -139,11 +135,6 @@ private:
    /// @brief direction tolerance
    /// @details It determines whether we a new machine has to be created
    double itsTolerance; 
- 
-#ifdef _OPENMP  
-   /// @brief mutex to synchronise cache access
-   mutable boost::shared_mutex itsMutex;
-#endif
 };
 
 } // namespace accessors

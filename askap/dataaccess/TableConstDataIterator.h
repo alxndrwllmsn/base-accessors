@@ -484,8 +484,6 @@ private:
   mutable bool itsChannelsSelected;
   /// selection invalid?
   mutable bool itsFlagData;
-  /// are we at the start?
-  mutable bool itsAtStart;
 };
 
 

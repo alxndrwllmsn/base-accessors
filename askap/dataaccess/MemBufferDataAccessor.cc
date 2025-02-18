@@ -76,10 +76,6 @@ casacore::Cube<casacore::Complex>& MemBufferDataAccessor::rwVisibility()
 /// @brief a helper method to ensure the buffer has appropriate shape
 void MemBufferDataAccessor::resizeBufferIfNeeded() const
 {
-  #ifdef _OPENMP
-  boost::lock_guard<boost::mutex> lock(itsMutex);
-  #endif
-  
   const IConstDataAccessor &acc = getROAccessor();
   if (itsBuffer.nplane() != acc.nRow() || itsBuffer.ncolumn() != acc.nChannel() ||
                                         itsBuffer.nrow() != acc.nPol()) {
