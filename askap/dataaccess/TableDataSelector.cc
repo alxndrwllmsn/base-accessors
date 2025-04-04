@@ -37,6 +37,8 @@
 #include <askap/dataaccess/DataAccessError.h>
 #include <askap/dataaccess/TableTimeStampSelectorImpl.h>
 
+// casa includes
+#include <casacore/casa/OS/Path.h>
 #include <casacore/tables/DataMan/TiledStManAccessor.h>
 #include <askap/askap/AskapLogging.h>
 ASKAP_LOGGER(logger, ".dataaccess.tabledataselector");
@@ -312,3 +314,27 @@ std::tuple<int,casacore::MFrequency,double> TableDataSelector::getFrequencySelec
 {
     return std::tuple<int,casacore::MFrequency,double>(itsNFreq,itsFreqStart,itsFreqInc);
 }
+
+/// @brief specify the name for caching the selection
+/// @details The (row) selection can be cached for repeated use, specify the name
+/// of the cache. If unspecified or empty, no caching will be done
+/// @param[in] string name : name of the cache file
+void  TableDataSelector::setSelectionCacheName(const std::string& name) {
+    itsSelectionCacheName = name;
+}
+
+/// @brief return the name for caching the selection
+/// @details The (row) selection can be cached for repeated use, return the name
+/// of the cache. If empty, no caching is active
+/// @return string name : name of the cache file
+const std::string& TableDataSelector::getSelectionCacheName() const {
+    return itsSelectionCacheName;
+}
+
+  /// @brief return the table name
+  /// @details The table name may be useful in setting the selection cache name.
+  /// This function returns the base name of the table.
+  /// @return string: the basename of the table (without directories)
+  std::string TableDataSelector::getTableName() const {
+    return casacore::Path(table().tableName()).baseName();
+  }
