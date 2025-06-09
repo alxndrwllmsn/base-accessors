@@ -118,6 +118,6 @@ failure:
     -   !reference [.github-status-callback, script]
     - else
     -   echo Push source is probably from bitbucket
-    -   BUILD_STATUS=passed BUILD_KEY=push ./build_status
+    -   BUILD_STATUS=failed BUILD_KEY=push ./build_status
     - fi
   when: on_failure
