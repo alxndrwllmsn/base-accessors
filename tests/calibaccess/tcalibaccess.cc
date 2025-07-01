@@ -30,6 +30,7 @@
 #include <CalParamNameHelperTest.h>
 #include <MemCalSolutionAccessorTest.h>
 #include <TableCalSolutionTest.h>
+#include <GainFilterTest.h>
 
 int main(int argc, char *argv[])
 {
@@ -39,6 +40,7 @@ int main(int argc, char *argv[])
     runner.addTest( askap::accessors::ParsetCalSolutionTest::suite());
     runner.addTest( askap::accessors::MemCalSolutionAccessorTest::suite());
     runner.addTest( askap::accessors::TableCalSolutionTest::suite());
+    runner.addTest( askap::accessors::GainFilterTest::suite());
     bool wasSucessful = runner.run();
 
     return wasSucessful ? 0 : 1;
