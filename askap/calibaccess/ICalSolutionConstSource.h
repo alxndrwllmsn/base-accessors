@@ -89,11 +89,6 @@ struct ICalSolutionConstSource {
   /// @return shared pointer to an accessor object
   virtual boost::shared_ptr<ICalSolutionConstAccessor> roSolution(const long id) const = 0;
 
-  /// @brief obtain number of solutions
-  /// @details this returns how many solutionIDs there are
-  /// @return long, the number of solutions
-  virtual long numberOfSolutions() const { return 1;}
-
   /// @brief shared pointer definition
   typedef boost::shared_ptr<ICalSolutionConstSource> ShPtr;
 };

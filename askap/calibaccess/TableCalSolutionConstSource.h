@@ -120,11 +120,6 @@ public:
   /// @return true, if table exists and is useable, false otherwise
   static bool tableExists(const std::string &fname);
 
-  /// @brief obtain number of solutions
-  /// @details this returns how many solutionIDs there are
-  /// @return long, the number of solutions
-  long numberOfSolutions() const override
-  { return table().nrow();}
 };
 
 

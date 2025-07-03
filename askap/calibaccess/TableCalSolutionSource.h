@@ -2,8 +2,8 @@
 /// @brief table-based implementation of the calibration solution source
 /// @details This implementation reads calibration solutions from and writes to a casa table
 /// Main functionality is implemented in the corresponding TableCalSolutionFiller class.
-/// This class creates an instance of the MemCalSolutionAccessor with the above mentioned filler 
-/// when a writeable accessor is requested. Read-only functionality is implemented in the 
+/// This class creates an instance of the MemCalSolutionAccessor with the above mentioned filler
+/// when a writeable accessor is requested. Read-only functionality is implemented in the
 /// base class.
 ///
 /// @copyright (c) 2011 CSIRO
@@ -45,35 +45,35 @@ namespace accessors {
 /// @brief table-based implementation of the calibration solution source
 /// @details This implementation reads calibration solutions from and writes to a casa table
 /// Main functionality is implemented in the corresponding TableCalSolutionFiller class.
-/// This class creates an instance of the MemCalSolutionAccessor with the above mentioned filler 
-/// when a writeable accessor is requested. Read-only functionality is implemented in the 
+/// This class creates an instance of the MemCalSolutionAccessor with the above mentioned filler
+/// when a writeable accessor is requested. Read-only functionality is implemented in the
 /// base class.
 /// @ingroup calibaccess
 class TableCalSolutionSource : public TableCalSolutionConstSource,
                                virtual public ICalSolutionSource,
                                virtual protected TableHolder {
-public:  
+public:
 
   /// @brief constructor using a table defined explicitly
   /// @details
   /// @param[in] tab table to work with
   /// @param[in] nAnt maximum number of antennas
-  /// @param[in] nBeam maximum number of beams   
-  /// @param[in] nChan maximum number of channels   
-  TableCalSolutionSource(const casacore::Table &tab, const casacore::uInt nAnt, 
+  /// @param[in] nBeam maximum number of beams
+  /// @param[in] nChan maximum number of channels
+  TableCalSolutionSource(const casacore::Table &tab, const casacore::uInt nAnt,
          const casacore::uInt nBeam, const casacore::uInt nChan);
- 
+
   /// @brief constructor using a file name
   /// @details The table is opened for writing
-  /// @param[in] name table file name 
+  /// @param[in] name table file name
   /// @param[in] nAnt maximum number of antennas
-  /// @param[in] nBeam maximum number of beams   
-  /// @param[in] nChan maximum number of channels     
-  TableCalSolutionSource(const std::string &name, const casacore::uInt nAnt, 
+  /// @param[in] nBeam maximum number of beams
+  /// @param[in] nChan maximum number of channels
+  TableCalSolutionSource(const std::string &name, const casacore::uInt nAnt,
          const casacore::uInt nBeam, const casacore::uInt nChan);
-  
+
   // remaining virtual methods of the interface
-  
+
   /// @brief obtain a solution ID to store new solution
   /// @details This method provides a solution ID for a new solution. It must
   /// be called before any write operation (one needs a writable accessor to
@@ -81,19 +81,19 @@ public:
   /// @param[in] time time stamp of the new solution in seconds since MJD of 0.
   /// @return solution ID
   virtual long newSolutionID(const double time);
-  
+
   /// @brief obtain a writeable accessor for a given solution ID
   /// @details This method returns a shared pointer to the solution accessor, which
-  /// can be used to both read the parameters and write them back. If a solution with 
-  /// the given ID doesn't exist, an exception is thrown. Existing solutions with undefined 
+  /// can be used to both read the parameters and write them back. If a solution with
+  /// the given ID doesn't exist, an exception is thrown. Existing solutions with undefined
   /// parameters are managed via validity flags of gains, leakages and bandpasses
   /// @param[in] id solution ID to access
   /// @return shared pointer to an accessor object
   virtual boost::shared_ptr<ICalSolutionAccessor> rwSolution(const long id) const;
-  
-    /// @brief shared pointer definition
+
+  /// @brief shared pointer definition
   typedef boost::shared_ptr<TableCalSolutionSource> ShPtr;
-  
+
   /// @brief helper method to remove an old table
   /// @details It just deletes the given table, which allows to create a new one
   /// from scratch (this functionality is used if one needs to overwrite the previous
@@ -102,14 +102,37 @@ public:
   /// @param[in] removeIfNotTable if true, the file is removed even if it is not a table.
   /// An exception is thrown in this case if this parameter is false.
   static void removeOldTable(const std::string &fname, const bool removeIfNotTable = true);
-  
+
+  /// @brief number of antennas
+  /// @details returns the maximum number of antennas
+  /// @return uInt with maximum number of antennas
+  inline casacore::uInt nAnt() const {
+    return itsNAnt;
+  }
+
+  /// @brief number of beams
+  /// @details returns the maximum number of beams
+  /// @return uInt with maximum number of beams
+  inline casacore::uInt nBeam() const {
+    return itsNBeam;
+  }
+
+  /// @brief number of channels
+  /// @details returns the maximum number of channels
+  /// @return uInt with maximum number of channels
+  inline casacore::uInt nChan() const {
+    return itsNChan;
+  }
+
+
+
 private:
   /// @brief number of antennas (used when new solutions are created)
   casacore::uInt itsNAnt;
   /// @brief number of beams (used when new solutions are created)
   casacore::uInt itsNBeam;
   /// @brief number of spectral channels (used when new solutions are created)
-  casacore::uInt itsNChan;     
+  casacore::uInt itsNChan;
 }; // class TableCalSolutionSource
 
 } // namespace accessors
