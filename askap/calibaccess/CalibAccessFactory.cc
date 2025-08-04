@@ -38,6 +38,7 @@
 #include <askap/calibaccess/TableCalSolutionSource.h>
 #include <askap/calibaccess/TableCalSolutionConstSource.h>
 #include <askap/calibaccess/ServiceCalSolutionSourceStub.h>
+#include <askap/calibaccess/GainFilterAdapterCalSolutionSource.h>
 
 #include <askap/askap/AskapError.h>
 
@@ -108,7 +109,12 @@ boost::shared_ptr<ICalSolutionConstSource> CalibAccessFactory::calSolutionSource
                ASKAPLOG_INFO_STR(logger, "A new table "<<fname<<" is to be created, any old file with the same name is going to be removed");
                TableCalSolutionSource::removeOldTable(fname);
            }
-           result.reset(new TableCalSolutionSource(fname,maxAnt,maxBeam,maxChan));
+           auto tcss = boost::shared_ptr<TableCalSolutionSource>(new TableCalSolutionSource(fname,maxAnt,maxBeam,maxChan));
+           if (parset.getString("fluxnorm","none")!="none") {
+              result.reset(new GainFilterAdapterCalSolutionSource(tcss,parset));
+           } else {
+              result = tcss;
+           }
        }
    } else if (calAccType == "service") {
       ASKAPLOG_INFO_STR(logger, "Using implementation of the calibration solution accessor working with the calibration service" );

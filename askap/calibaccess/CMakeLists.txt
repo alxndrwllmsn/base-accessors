@@ -5,6 +5,7 @@ CalSolutionSourceStub.cc
 CalibAccessFactory.cc
 ChanAdapterCalSolutionConstAccessor.cc
 ChanAdapterCalSolutionConstSource.cc
+GainFilterAdapterCalSolutionSource.cc
 ICalSolutionAccessor.cc
 ICalSolutionConstAccessor.cc
 ICalSolutionConstSource.cc
@@ -27,6 +28,7 @@ CalSolutionSourceStub.h
 CalibAccessFactory.h
 ChanAdapterCalSolutionConstAccessor.h
 ChanAdapterCalSolutionConstSource.h
+GainFilterAdapterCalSolutionSource.h
 ICalSolutionAccessor.h
 ICalSolutionConstAccessor.h
 ICalSolutionConstSource.h
@@ -47,4 +49,3 @@ TableCalSolutionSource.h
 
 DESTINATION include/askap/calibaccess
 )
-
