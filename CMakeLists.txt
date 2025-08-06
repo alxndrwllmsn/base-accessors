@@ -118,7 +118,7 @@ option (ENABLE_RPATH "Include rpath in executables and shared libraries" YES)
 option (ENABLE_OPENMP "Build with OPENMP Support" NO)
 
 # find packages
-find_package(Boost REQUIRED COMPONENTS filesystem system thread chrono)
+find_package(Boost REQUIRED COMPONENTS filesystem system thread)
 find_package(log4cxx REQUIRED)
 find_package(Casacore REQUIRED COMPONENTS  ms images mirlib coordinates fits lattices measures scimath scimath_f tables casa)
 find_package(XercesC REQUIRED)
