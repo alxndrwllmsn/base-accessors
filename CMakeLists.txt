@@ -6,7 +6,7 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(VERSION "1.17.3")
+set(VERSION "1.17.4")
 project(base-accessors VERSION ${VERSION} LANGUAGES C CXX)
 
 find_package(Git REQUIRED)
@@ -118,7 +118,7 @@ option (ENABLE_RPATH "Include rpath in executables and shared libraries" YES)
 option (ENABLE_OPENMP "Build with OPENMP Support" NO)
 
 # find packages
-find_package(Boost REQUIRED COMPONENTS filesystem system thread chrono)
+find_package(Boost REQUIRED COMPONENTS filesystem thread)
 find_package(log4cxx REQUIRED)
 find_package(Casacore REQUIRED COMPONENTS  ms images mirlib coordinates fits lattices measures scimath scimath_f tables casa)
 find_package(XercesC REQUIRED)
