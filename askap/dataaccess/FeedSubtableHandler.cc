@@ -57,7 +57,7 @@
 
 // enable logger here, when it is used in the code
 //#include <askap/askap/AskapLogging.h>
-//ASKAP_LOGGER(logger, "");
+//ASKAP_LOGGER(logger, "dataaccess.feedsubtablehandler");
 
 using namespace askap;
 using namespace askap::accessors;
@@ -255,7 +255,6 @@ void FeedSubtableHandler::fillCache(const casacore::MEpoch &time,
        computeBeamOffset(rcptrOffsets(row),cOffset);
        if ((std::abs(cOffset(0)) > 1e-15) || (std::abs(cOffset(1)) > 1e-15)) {
            itsAllCachedOffsetsZero = false;
-           //std::cerr<<"non zero offset "<<cOffset(0)<<" "<<cOffset(1)<<std::endl; 
        }
        itsPositionAngles[row]=computePositionAngle(rcptrPAs(row));
        itsIndices(antIDs(row),feedIDs(row))=row;

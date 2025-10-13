@@ -119,6 +119,7 @@ public:
   /// @param[in] fname file name of the table to test
   /// @return true, if table exists and is useable, false otherwise
   static bool tableExists(const std::string &fname);
+
 };
 
 

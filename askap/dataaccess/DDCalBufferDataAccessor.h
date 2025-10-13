@@ -45,12 +45,6 @@
 #include <askap/dataaccess/MetaDataAccessor.h>
 #include <askap/dataaccess/IFlagAndNoiseDataAccessor.h>
 
-#ifdef _OPENMP
-//boost include
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/lock_guard.hpp>
-#endif
-
 namespace askap {
 
 namespace accessors {
@@ -116,11 +110,6 @@ private:
 
   /// @brief actual buffer
   mutable casacore::Cube<casacore::Complex> itsBuffer;
-
-  #ifdef _OPENMP
-  /// @brief synchronisation lock for resizing of the buffer
-  mutable boost::mutex itsMutex;
-  #endif
 };
 
 } // namespace accessors

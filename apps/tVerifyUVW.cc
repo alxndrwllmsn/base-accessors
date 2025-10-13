@@ -135,7 +135,7 @@ void UVWChecker::run() {
        const casacore::Cube<casacore::Bool>& flags = it->flag();
        bool hasUnflaggedData = false;
        for (casacore::uInt row = 0; row < it->nRow(); ++row) {
-            if (!casacore::allTrue(flags.yzPlane(row))) {
+            if (!casacore::allTrue(flags.xyPlane(row))) {
                 // this row has unflagged data, UVWs should be good
                 hasUnflaggedData = true;
                 const casacore::RigidVector<casacore::Double, 3> testUVW = testUVWs[row];

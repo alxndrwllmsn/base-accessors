@@ -38,11 +38,6 @@
 #include <askap/dataaccess/IConstDataAccessor.h>
 #include <casacore/measures/Measures/MDirection.h>
 
-#ifdef _OPENMP
-// boost includes
-#include <boost/thread/shared_mutex.hpp>
-#endif
-
 namespace askap {
 
 namespace accessors {
@@ -119,12 +114,6 @@ private:
    /// is too large some round-off errors may accumulate as we just add some extra delay to the
    /// cache following every change to this field.
    mutable casacore::MDirection itsImageCentre;
-   
-#ifdef _OPENMP
-   /// @brief mutex to synchronise cache access for all threads 
-   mutable boost::shared_mutex itsMutex;
-#endif
-
 };
 
 

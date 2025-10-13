@@ -135,6 +135,11 @@ public:
   /// returns the number of channels, the start frequency and the increment (Hz)
   virtual std::tuple<int,casacore::MFrequency,double> getFrequencySelection() const throw() = 0;
 
+  /// @brief return the name of the selection cache
+  /// @details The (row) selection can be cached for repeated use, return the name
+  /// of the cache. If empty, no caching is active
+  /// @return string name : name of the cache file
+  virtual const std::string& getSelectionCacheName() const = 0;
 };
 
 } // namespace accessors
