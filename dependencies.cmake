@@ -16,6 +16,6 @@ set ( LOFAR_BLOB_TAG               tags/1.3.4      CACHE  STRING    "lofar-blob 
 set ( BASE_ASKAP_TAG               tags/1.8.2      CACHE  STRING    "base-askap version"               FORCE )
 set ( BASE_LOGFILTERS_TAG          tags/1.5.1      CACHE  STRING    "base-logfilters version"          FORCE )
 set ( BASE_IMAGEMATH_TAG           tags/1.15.4     CACHE  STRING    "base-imagemath version"           FORCE )
-set ( BASE_ASKAPPARALLEL_TAG       tags/1.10.4     CACHE  STRING    "base-askapparallel version"       FORCE )
+set ( BASE_ASKAPPARALLEL_TAG       adios_integration     CACHE  STRING    "base-askapparallel version"       FORCE )
 set ( BASE_SCIMATH_TAG             tags/1.15.4     CACHE  STRING    "base-scimath version"             FORCE )
 # TOS related repos are not versioned yet, so pinned this build with commit hash values.
